@@ -1,0 +1,5 @@
+discord.py
+requests
+icalendar
+recurring-ical-events
+pytz
