@@ -6,8 +6,9 @@ from datetime import datetime, timedelta, timezone
 
 import recurring_ical_events
 from icalendar import Calendar
+import os
 
-TOKEN = "MTQ4MTk4NzczNDM4NTE5NzExNg.G0u17R.kmRBONVtEeQc0QBWBnjfPlvc64BRQjRizW8e_w"
+TOKEN = os.getenv("TOKEN")
 
 CHANNEL_ID = 1481901142295183380
 
