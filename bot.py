@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands, tasks
 from discord import app_commands
 import requests
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, time
 
 import recurring_ical_events
 from icalendar import Calendar
@@ -74,7 +74,7 @@ async def on_ready():
 
 
 # 🔔 AUTO EVENT POST + CLEAN CHANNEL
-@tasks.loop(minutes=10)
+@tasks.loop(time=time(hour=0, minute=10, tzinfo=timezone.utc))
 async def check_events():
 
     channel = bot.get_channel(CHANNEL_ID)
