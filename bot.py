@@ -17,9 +17,15 @@ CALENDAR_URL = "https://calendar.google.com/calendar/ical/e6196c2703be23e87e0270
 intents = discord.Intents.default()
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-posted_events = set()
+
+# 🔥 PULISCE SOLO I MESSAGGI DEL BOT
+async def clear_channel(channel):
+    async for message in channel.history(limit=100):
+        if message.author == bot.user:
+            await message.delete()
 
 
+# 📅 PRENDE EVENTI DAL CALENDARIO
 def get_events():
 
     response = requests.get(CALENDAR_URL)
@@ -67,24 +73,26 @@ async def on_ready():
     check_events.start()
 
 
-# 🔔 AUTO EVENT POST
+# 🔔 AUTO EVENT POST + CLEAN CHANNEL
 @tasks.loop(minutes=10)
 async def check_events():
 
     channel = bot.get_channel(CHANNEL_ID)
 
-    events = get_events()
+    # 🔥 PULISCE IL CANALE
+    await clear_channel(channel)
 
+    events = get_events()
     today = datetime.now(timezone.utc).date()
+
+    found = False
 
     for event in events:
 
-        if event["date"] == today and event["name"] not in posted_events:
-
-            posted_events.add(event["name"])
+        if event["date"] == today:
 
             embed = discord.Embed(
-                title="📅 Kingshot Event Today",
+                title="📅 Today's Events",
                 description=f"⚔️ **{event['name']}**",
                 color=0xff9900
             )
@@ -95,15 +103,20 @@ async def check_events():
                 inline=False
             )
 
-            await channel.send(embed=embed)
+            # 🔥 AUTO DELETE DOPO 24H
+            await channel.send(embed=embed, delete_after=86400)
+
+            found = True
+
+    if not found:
+        await channel.send("No events today", delete_after=86400)
 
 
-# 🔹 TODAY COMMAND
+# 🔹 COMMAND: TODAY
 @bot.tree.command(name="today", description="Show today's events")
 async def today(interaction: discord.Interaction):
 
     events = get_events()
-
     today_date = datetime.now(timezone.utc).date()
 
     embed = discord.Embed(
@@ -131,7 +144,7 @@ async def today(interaction: discord.Interaction):
     await interaction.response.send_message(embed=embed)
 
 
-# 🔹 WEEK COMMAND
+# 🔹 COMMAND: WEEK
 @bot.tree.command(name="week", description="Show this week's events")
 async def week(interaction: discord.Interaction):
 
