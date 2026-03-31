@@ -25,10 +25,10 @@ def get_events():
     response = requests.get(CALENDAR_URL)
     calendar = Calendar.from_ical(response.text)
 
-    today = datetime.now(timezone.utc)
-    next_week = today + timedelta(days=7)
+    now = datetime.now(timezone.utc)
+    next_week = now + timedelta(days=7)
 
-    events = recurring_ical_events.of(calendar).between(today, next_week)
+    events = recurring_ical_events.of(calendar).between(now, next_week)
 
     result = []
 
@@ -56,18 +56,18 @@ def get_events():
 @bot.event
 async def on_ready():
 
-    print(f"Bot online come {bot.user}")
+    print(f"Bot online as {bot.user}")
 
     try:
         await bot.tree.sync()
-        print("Comandi sincronizzati")
+        print("Commands synced")
     except Exception as e:
         print(e)
 
     check_events.start()
 
 
-# 🔔 controllo automatico eventi
+# 🔔 AUTO EVENT POST
 @tasks.loop(minutes=10)
 async def check_events():
 
@@ -84,13 +84,13 @@ async def check_events():
             posted_events.add(event["name"])
 
             embed = discord.Embed(
-                title="📅 Evento Kingshot oggi",
+                title="📅 Kingshot Event Today",
                 description=f"⚔️ **{event['name']}**",
                 color=0xff9900
             )
 
             embed.add_field(
-                name="🕒 Orario",
+                name="🕒 Time",
                 value=event["time"],
                 inline=False
             )
@@ -98,15 +98,16 @@ async def check_events():
             await channel.send(embed=embed)
 
 
-@bot.tree.command(name="oggi", description="Mostra eventi di oggi")
-async def oggi(interaction: discord.Interaction):
+# 🔹 TODAY COMMAND
+@bot.tree.command(name="today", description="Show today's events")
+async def today(interaction: discord.Interaction):
 
     events = get_events()
 
-    today = datetime.now(timezone.utc).date()
+    today_date = datetime.now(timezone.utc).date()
 
     embed = discord.Embed(
-        title="📅 Eventi di oggi",
+        title="📅 Today's Events",
         color=0xff9900
     )
 
@@ -114,7 +115,7 @@ async def oggi(interaction: discord.Interaction):
 
     for event in events:
 
-        if event["date"] == today:
+        if event["date"] == today_date:
 
             embed.add_field(
                 name=event["name"],
@@ -125,29 +126,26 @@ async def oggi(interaction: discord.Interaction):
             found = True
 
     if not found:
-        embed.description = "Nessun evento oggi"
+        embed.description = "No events today"
 
     await interaction.response.send_message(embed=embed)
 
 
-@bot.tree.command(name="settimana", description="Mostra eventi della settimana")
-async def settimana(interaction: discord.Interaction):
+# 🔹 WEEK COMMAND
+@bot.tree.command(name="week", description="Show this week's events")
+async def week(interaction: discord.Interaction):
 
     events = get_events()
 
     embed = discord.Embed(
-        title="📅 Eventi della settimana",
+        title="📅 This Week's Events",
         color=0xff9900
     )
 
     if not events:
-
-        embed.description = "Nessun evento"
-
+        embed.description = "No events this week"
     else:
-
         for event in events:
-
             embed.add_field(
                 name=event["name"],
                 value=f"{event['date']} • {event['time']}",
